@@ -27,13 +27,3 @@ func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, req *http.Request) {
 
 	io.WriteString(w, hits)
 }
-
-func (cfg *apiConfig) handlerResetMetrics(w http.ResponseWriter, req *http.Request) {
-	cfg.fileserverHits.Store(0)
-
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-
-	req.Write(w)
-
-}
