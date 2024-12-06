@@ -60,3 +60,26 @@ func cleanBody(c string) string {
 
 	return r.ReplaceAllLiteralString(c, "****")
 }
+
+func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, req *http.Request) {
+	dbChirps, err := cfg.dbQueries.GetChirps(req.Context())
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "failed getting chirps from database", err)
+		return
+	}
+
+	c := []Chirp{}
+
+	for _, item := range dbChirps {
+		c = append(c, Chirp{
+			Id:        item.ID,
+			CreatedAt: item.CreatedAt,
+			UpdatedAt: item.UpdatedAt,
+			Body:      item.Body,
+			UserId:    item.UserID,
+		})
+	}
+
+	respondWithJSON(w, http.StatusOK, c)
+}
