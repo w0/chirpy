@@ -10,7 +10,12 @@ func (cfg *apiConfig) handlerResetMetrics(w http.ResponseWriter, req *http.Reque
 	}
 
 	cfg.fileserverHits.Store(0)
-	cfg.dbQueries.DeleteUsers(req.Context())
+	err := cfg.dbQueries.DeleteUsers(req.Context())
+
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "failed to reset users table", err)
+		return
+	}
 
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)

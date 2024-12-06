@@ -9,4 +9,4 @@ VALUES (
 RETURNING *;
 
 -- name: DeleteUsers :exec
-TRUNCATE users;
+TRUNCATE users CASCADE;
