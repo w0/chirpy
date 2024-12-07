@@ -6,19 +6,26 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/w0/chirpy/internal/auth"
+	"github.com/w0/chirpy/internal/database"
 )
 
 type User struct {
-	Id         uuid.UUID `json:"id"`
-	Email      string    `json:"email"`
-	Created_at time.Time `json:"created_at"`
-	Updated_at time.Time `json:"updated_at"`
+	Id        uuid.UUID `json:"id"`
+	Email     string    `json:"email"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 func (c *apiConfig) handlerNewUser(w http.ResponseWriter, req *http.Request) {
 
+	type newUser struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
 	decoder := json.NewDecoder(req.Body)
-	var u User
+	var u newUser
 	err := decoder.Decode(&u)
 
 	if err != nil {
@@ -26,16 +33,26 @@ func (c *apiConfig) handlerNewUser(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	dbUser, err := c.dbQueries.CreateUser(req.Context(), u.Email)
+	hashed, err := auth.HashPassword(u.Password)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "failed hashing password", err)
+		return
+	}
+
+	dbUser, err := c.dbQueries.CreateUser(req.Context(), database.CreateUserParams{
+		Email:          u.Email,
+		HashedPassword: hashed,
+	})
 
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "failed creating user", err)
 		return
 	}
 
-	u.Created_at = dbUser.CreatedAt
-	u.Updated_at = dbUser.UpdatedAt
-	u.Id = dbUser.ID
-
-	respondWithJSON(w, http.StatusCreated, u)
+	respondWithJSON(w, http.StatusCreated, User{
+		Id:        dbUser.ID,
+		Email:     dbUser.Email,
+		CreatedAt: dbUser.CreatedAt,
+		UpdatedAt: dbUser.UpdatedAt,
+	})
 }
