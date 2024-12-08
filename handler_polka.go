@@ -5,10 +5,22 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/w0/chirpy/internal/auth"
 	"github.com/w0/chirpy/internal/database"
 )
 
 func (cfg *apiConfig) handlerAddSub(w http.ResponseWriter, req *http.Request) {
+	apiKey, err := auth.GetAPIKey(req.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "", err)
+		return
+	}
+
+	if apiKey != cfg.polkaKey {
+		respondWithError(w, http.StatusUnauthorized, "invalid", err)
+		return
+	}
+
 	type polkaRequest struct {
 		Event string `json:"event"`
 		Data  struct {
@@ -18,7 +30,7 @@ func (cfg *apiConfig) handlerAddSub(w http.ResponseWriter, req *http.Request) {
 
 	decoder := json.NewDecoder(req.Body)
 	var polka polkaRequest
-	err := decoder.Decode(&polka)
+	err = decoder.Decode(&polka)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "JSON decode error", err)
 		return
