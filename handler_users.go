@@ -11,10 +11,11 @@ import (
 )
 
 type User struct {
-	Id        uuid.UUID `json:"id"`
-	Email     string    `json:"email"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	Id          uuid.UUID `json:"id"`
+	Email       string    `json:"email"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+	IsChirpyRed bool      `json:"is_chirpy_red"`
 }
 
 func (cfg *apiConfig) handlerNewUser(w http.ResponseWriter, req *http.Request) {
@@ -50,10 +51,11 @@ func (cfg *apiConfig) handlerNewUser(w http.ResponseWriter, req *http.Request) {
 	}
 
 	respondWithJSON(w, http.StatusCreated, User{
-		Id:        dbUser.ID,
-		Email:     dbUser.Email,
-		CreatedAt: dbUser.CreatedAt,
-		UpdatedAt: dbUser.UpdatedAt,
+		Id:          dbUser.ID,
+		Email:       dbUser.Email,
+		CreatedAt:   dbUser.CreatedAt,
+		UpdatedAt:   dbUser.UpdatedAt,
+		IsChirpyRed: dbUser.IsChirpyRed,
 	})
 }
 
@@ -105,5 +107,11 @@ func (cfg *apiConfig) handlerUpdateUser(w http.ResponseWriter, req *http.Request
 		return
 	}
 
-	respondWithJSON(w, http.StatusOK, User{Id: dbUpdate.ID, CreatedAt: dbUpdate.CreatedAt, UpdatedAt: dbUpdate.UpdatedAt, Email: dbUpdate.Email})
+	respondWithJSON(w, http.StatusOK, User{
+		Id:          dbUpdate.ID,
+		CreatedAt:   dbUpdate.CreatedAt,
+		UpdatedAt:   dbUpdate.UpdatedAt,
+		Email:       dbUpdate.Email,
+		IsChirpyRed: dbUpdate.IsChirpyRed,
+	})
 }
