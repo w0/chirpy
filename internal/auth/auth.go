@@ -69,7 +69,7 @@ func GetBearerToken(headers http.Header) (string, error) {
 		return strings.TrimPrefix(value, "Bearer "), nil
 	}
 
-	return "", fmt.Errorf("authorization not found in headers")
+	return "", fmt.Errorf("authorization not found")
 }
 
 func MakeRefreshToken() (string, error) {
