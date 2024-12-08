@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/w0/chirpy/internal/auth"
 	"github.com/w0/chirpy/internal/database"
 )
 
@@ -20,9 +21,27 @@ type Chirp struct {
 
 func (cfg *apiConfig) handlerNewChirp(w http.ResponseWriter, req *http.Request) {
 
+	bearerToken, err := auth.GetBearerToken(req.Header)
+
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "missing Authorization header", err)
+		return
+	}
+
+	userID, err := auth.ValidateJWT(bearerToken, cfg.secret)
+
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "", err)
+		return
+	}
+
+	type newChirp struct {
+		Body string `json:"body"`
+	}
+
 	decoder := json.NewDecoder(req.Body)
-	c := Chirp{}
-	err := decoder.Decode(&c)
+	c := newChirp{}
+	err = decoder.Decode(&c)
 
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "JSON decode error", err)
@@ -39,7 +58,7 @@ func (cfg *apiConfig) handlerNewChirp(w http.ResponseWriter, req *http.Request) 
 	dbChrip, err := cfg.dbQueries.NewChirp(req.Context(),
 		database.NewChirpParams{
 			Body:   c.Body,
-			UserID: c.UserId,
+			UserID: userID,
 		})
 
 	if err != nil {
@@ -47,11 +66,13 @@ func (cfg *apiConfig) handlerNewChirp(w http.ResponseWriter, req *http.Request) 
 		return
 	}
 
-	c.UpdatedAt = dbChrip.UpdatedAt
-	c.CreatedAt = dbChrip.CreatedAt
-	c.Id = dbChrip.ID
-
-	respondWithJSON(w, http.StatusCreated, c)
+	respondWithJSON(w, http.StatusCreated, Chirp{
+		Id:        dbChrip.ID,
+		CreatedAt: dbChrip.CreatedAt,
+		UpdatedAt: dbChrip.UpdatedAt,
+		Body:      dbChrip.Body,
+		UserId:    dbChrip.UserID,
+	})
 
 }
 
